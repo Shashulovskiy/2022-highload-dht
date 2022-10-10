@@ -47,6 +47,7 @@ public @interface ServiceTest {
     int stage();
     int clusterSize() default 1;
     boolean prestartCluster() default true;
+    boolean closeAfterExecution() default true;
 
     int bonusForWeek() default 0;
 
@@ -118,7 +119,7 @@ public @interface ServiceTest {
             return maxFactories.stream().map(c -> {
                 List<ServiceInfo> services;
                 try {
-                    services = createServices(context, c);
+                    services = createServices(context, c, test.closeAfterExecution());
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -160,7 +161,7 @@ public @interface ServiceTest {
             return clazz;
         }
 
-        private List<ServiceInfo> createServices(ExtensionContext context, Class<?> clazz) throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        private List<ServiceInfo> createServices(ExtensionContext context, Class<?> clazz, boolean closeAfterExecution) throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
             ServiceTest annotation = context.getRequiredTestMethod().getAnnotation(ServiceTest.class);
             ServiceFactory.Factory f = (ServiceFactory.Factory) clazz.getDeclaredConstructor().newInstance();
 
@@ -179,8 +180,10 @@ public @interface ServiceTest {
                 Service service = f.create(config);
 
                 ExtensionContext.Store.CloseableResource res = () -> {
-                    service.stop().get(10, TimeUnit.MINUTES);
-                    FileUtils.delete(workingDir);
+                    if (closeAfterExecution) {
+                        service.stop().get(10, TimeUnit.MINUTES);
+                        FileUtils.delete(workingDir);
+                    }
                 };
 
                 context.getStore(NAMESPACE).put(ID.incrementAndGet() + "", res);

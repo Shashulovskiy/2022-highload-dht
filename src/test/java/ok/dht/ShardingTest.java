@@ -168,7 +168,7 @@ class ShardingTest extends TestBase {
         assertEquals(HttpURLConnection.HTTP_NOT_FOUND, serviceInfos.get(1).get(key).statusCode());
     }
 
-    @ServiceTest(stage = 3, clusterSize = 2)
+    @ServiceTest(stage = 3, clusterSize = 2, closeAfterExecution = false)
     void distribute(List<ServiceInfo> serviceInfos) throws Exception {
         final String key = randomId();
         final byte[] value = randomValue();
