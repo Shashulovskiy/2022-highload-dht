@@ -182,8 +182,8 @@ public @interface ServiceTest {
                 ExtensionContext.Store.CloseableResource res = () -> {
                     if (closeAfterExecution) {
                         service.stop().get(10, TimeUnit.MINUTES);
-                        FileUtils.delete(workingDir);
                     }
+                    FileUtils.delete(workingDir);
                 };
 
                 context.getStore(NAMESPACE).put(ID.incrementAndGet() + "", res);
